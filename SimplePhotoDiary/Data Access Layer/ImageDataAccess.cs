@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -20,28 +21,23 @@ namespace SimplePhotoDiary.Data_Access_Layer
             string sql = "SELECT * FROM Images WHERE EventId =" + eventid;
             SqlDataReader reader = this.GetData(sql);
             List<Images> images = new List<Images>();
-            if (reader.Read())
+
+            foreach (IDataRecord record in GetFromReader(reader))
             {
-                int co = 0;
-                while (reader.Read())
-                {
-                    Images image = new Images();
-                    image.ImageId = (int)reader["ImageId"];
-                    image.Pictures = (byte[])reader["Pictures"];
-                    image.Story = reader["Story"].ToString();
-                    image.ModificationDate = reader["ModificationDate"].ToString();
-                    image.EventId = (int)reader["EventId"];
-                    images.Add(image);
-                    co++;
-                }
-                MessageBox.Show("count " + Convert.ToString(co));
-                MessageBox.Show("list " + Convert.ToString(images.Count));
-                return images;
+                Images image = new Images();
+                image.ImageId = (int)record["ImageId"];
+                image.Pictures = (byte[])record["Pictures"];
+                image.Story = record["Story"].ToString();
+                image.ModificationDate = record["ModificationDate"].ToString();
+                image.EventId = (int)record["EventId"];
+                images.Add(image);
             }
-            else
-            {
-                return null;
-            }
+            return images;
+        }
+
+        private static IEnumerable<IDataRecord> GetFromReader(IDataReader reader)
+        {
+            while (reader.Read()) yield return reader;
         }
 
         public Images GetImage(int imageid)
